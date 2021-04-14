@@ -59,7 +59,7 @@ def callback(recognizer, audio):
 
 def wit(recognition):
     API_ENDPOINT = 'https://api.wit.ai/speech'
-    ACCESS_TOKEN = [key]
+    ACCESS_TOKEN = 'BGGZW42I23GWLR27K442PVGDRQ3DDW6O'
     headers = {'authorization': 'Bearer ' + ACCESS_TOKEN}
     resp = requests.get('https://api.wit.ai/message?&q=(%s)' % recognition, headers = headers)
     data = json.loads(resp.content)
