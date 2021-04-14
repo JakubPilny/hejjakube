@@ -1,0 +1,7 @@
+wit
+pyaudio
+pyttsx3
+speechrecognition
+requests
+playsound
+wikipedia
