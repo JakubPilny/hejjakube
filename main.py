@@ -7,7 +7,8 @@ import os
 from requests import get
 import json
 from playsound import playsound
-import datetime
+from datetime import datetime
+from datetime import timedelta
 import requests
 import wikipedia
 
@@ -18,88 +19,111 @@ def tts(response):
     engine.say(response)
     engine.runAndWait()
 
-def weather(call,additional):
+def weather(day):
     ip = get('https://ip.seeip.org').text
     key = [key]
-    api = call + key + "&q=" + ip + additional + "&lang=cs"
-    weatherplain = get(api)
-    wjson = weatherplain.json()
-    if "current" in call:
-        temperature = wjson.get('current').get('temp_c')
-        condition = wjson.get('current').get('condition').get('text').lower()
-        weather = condition + " s teplotou " + str(temperature) + " stupňů."
-    else:
-        maxtemperature = str(wjson.get('forecast').get('forecastday')[0].get('day').get('maxtemp_c'))
-        mintemperature = str(wjson.get('forecast').get('forecastday')[0].get('day').get('mintemp_c'))
-        condition = wjson.get('forecast').get('forecastday')[0].get('day').get('condition').get('text').lower()
-        if "-" in str(mintemperature):
-            mintemperature = "mínus " + mintemperature[1:]
-        weather = condition + " s minimální teplotou " + mintemperature + " stupňů a maximální teplotou " + maxtemperature + " stupňů."
-    return(weather)
+    weatherapi = get("http://api.weatherapi.com/v1/forecast.json?key=" + key + "&q=" + ip + "&days=10&lang=cs")
+    weatherjson = weatherapi.json()
+    if (day == 0):
+        current = weatherjson.get('current')
+        currenttemperature = str(int(current.get('temp_c')))
+        currentcondition = current.get('condition').get('text').lower()
+        return("Aktuálně je " + currentcondition + " s teplotou " + currenttemperature + " stupňů.")
+    try:
+        forecastday = weatherjson.get('forecast').get('forecastday')[day - 1].get('day')
+        maxtemperature = str(int(forecastday.get('maxtemp_c')))
+        mintemperature = str(int(forecastday.get('mintemp_c')))
+        condition = forecastday.get('condition').get('text').lower()
+        forecasttext = condition + " s maximální teplotou " + maxtemperature + " stupňů a minimální teplotou " + mintemperature + " stupňů."
+        days = ('pondělí', 'úterý', 'středu', 'čtvrtek', 'pátek', 'sobotu', 'neděli')
+        dayofweek = (datetime.now() + timedelta(day - 1)).weekday()
+    except Exception as e:
+        return("Tak moc do budoucnosti nevidím.")
+    if (day == 1):
+        return("Dnes bude " + forecasttext)
+    elif (day == 2):
+        return("Zítra bude " + forecasttext)
+    elif (day == 3):
+        return("V " + days[dayofweek] + " bude " + forecasttext)
+    return("Tak moc do budoucnosti nevidím.")
 
-def wiki(body):
+def wiki(value):
     wikipedia.set_lang("cs")
-    response = ""
     search_term = ""
     try:
-        search_term = body.lower().split("wikipedia ", 1)[1]
-    except Exception as e:
-        return("")
-    try:
-        response = wikipedia.summary(search_term, sentences=3)
+        return(wikipedia.summary(value, sentences=3))
     except Exception as e:
         try:
-            suggest = wikipedia.suggest(search_term)
-            response = wikipedia.summary(suggest, sentences=3)
+            suggest = wikipedia.suggest(value)
+            return(wikipedia.summary(suggest, sentences=3))
         except Exception as e:
-            print("")
-    return response
+            return("")
+    return("")
 
 def callback(recognizer, audio):
     try:
         words = r.recognize_google(audio, language='cs-CZ')
         if "hej jakube" in words.lower():
-            wit(words)
+            try:
+                words = words.lower().split("hej jakube ", 1)[1]
+                wit(words)
+            except Exception as e:
+                print("")
     except sr.UnknownValueError:
         print("Google nerozpoznal audio.")
     except sr.RequestError as e:
         print("Nemohla být zaslána žádost na Google. {0}".format(e))
 
 def wit(recognition):
-    API_ENDPOINT = 'https://api.wit.ai/speech'
-    ACCESS_TOKEN = 'BGGZW42I23GWLR27K442PVGDRQ3DDW6O'
-    headers = {'authorization': 'Bearer ' + ACCESS_TOKEN}
-    resp = requests.get('https://api.wit.ai/message?&q=(%s)' % recognition, headers = headers)
+    headers = {'authorization': 'Bearer BGGZW42I23GWLR27K442PVGDRQ3DDW6O'}
+    data = requests.get('https://api.wit.ai/message?&q=(%s)' % recognition, headers = headers)
+    commands(data)
+
+def commands(resp):
     data = json.loads(resp.content)
     test = resp.json()
     result = json.dumps(test)
     if "time:time" in result:
-        now = datetime.datetime.now()
+        now = datetime.now()
         response = "Teď je " + str(now.hour) + "hodin a " + str(now.minute) + "minut."
         print(response)
         tts(response)
     elif "date:date" in result:
-        now = datetime.datetime.now()
+        now = datetime.now()
         response = "Dnes je " + str(now.day) + "." + str(now.month) + "." + str(now.year)
         print(response)
         tts(response)
+    elif "date:day" in result:
+        now = datetime.now()
+        days = ('pondělí', 'úterý', 'středa', 'čtvrtek', 'pátek', 'sobota', 'neděle')
+        response = "Dnes je " + days[now.weekday()] + " " + str(now.day) + "." + str(now.month) + "." + str(now.year)
+        print(response)
+        tts(response)
     elif "weather:current" in result:
-        additional = ""
-        call = "http://api.weatherapi.com/v1/current.json?key="
-        response = weather(call,additional)
-        text = "Aktuálně je " + response
-        print(text)
-        tts(text)
+        response = weather(0)
+        print(response)
+        tts(response)
+    elif "weather:today" in result:
+        response = weather(1)
+        print(response)
+        tts(response)
     elif "weather:tomorrow" in result:
-        additional = "&days=1"
-        call = "http://api.weatherapi.com/v1/forecast.json?key="
-        response = weather(call,additional)
-        text = "Zítra bude " + response
-        print(text)
-        tts(text)
-    elif "wit$wikipedia_search_query:wikipedia_search_query" in result:
-        body = data['entities']['wit$wikipedia_search_query:wikipedia_search_query'][0]['body']
-        response = wiki(body)
+        response = weather(2)
+        print(response)
+        tts(response)
+    elif "weather:forecast" in result:
+        days = ('pondělí', 'úterý', 'středu', 'čtvrtek', 'pátek', 'sobotu', 'neděli')
+        value = data['entities']['weather:forecast'][0]['value']
+        dayofweek = (datetime.now() + timedelta(days.index(value))).weekday()
+        if (dayofweek == 0 or dayofweek == 1):
+            response = weather(8)
+        else:
+            response = weather(dayofweek)
+        print(response)
+        tts(response)
+    elif "wikipedia:wikipedia" in result:
+        value = data['entities']['wikipedia:wikipedia'][0]['value']
+        response = wiki(value)
         print(response)
         tts(response)
 
