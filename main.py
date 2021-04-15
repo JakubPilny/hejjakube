@@ -18,15 +18,23 @@ def tts(response):
     engine.say(response)
     engine.runAndWait()
 
-def weather(additional):
+def weather(call,additional):
     ip = get('https://ip.seeip.org').text
     key = [key]
-    api = "http://api.weatherapi.com/v1/current.json?key=" + key + "&q=" + ip + additional + "&lang=cs"
+    api = call + key + "&q=" + ip + additional + "&lang=cs"
     weatherplain = get(api)
     wjson = weatherplain.json()
-    temperature = int(wjson.get('current').get('temp_c'))
-    condition = wjson.get('current').get('condition').get('text').lower()
-    weather = condition + " s teplotou " + str(temperature) + " stupňů."
+    if "current" in call:
+        temperature = wjson.get('current').get('temp_c')
+        condition = wjson.get('current').get('condition').get('text').lower()
+        weather = condition + " s teplotou " + str(temperature) + " stupňů."
+    else:
+        maxtemperature = str(wjson.get('forecast').get('forecastday')[0].get('day').get('maxtemp_c'))
+        mintemperature = str(wjson.get('forecast').get('forecastday')[0].get('day').get('mintemp_c'))
+        condition = wjson.get('forecast').get('forecastday')[0].get('day').get('condition').get('text').lower()
+        if "-" in str(mintemperature):
+            mintemperature = "mínus " + mintemperature[1:]
+        weather = condition + " s minimální teplotou " + mintemperature + " stupňů a maximální teplotou " + maxtemperature + " stupňů."
     return(weather)
 
 def wiki(body):
@@ -36,7 +44,7 @@ def wiki(body):
     try:
         search_term = body.lower().split("wikipedia ", 1)[1]
     except Exception as e:
-        print("")
+        return("")
     try:
         response = wikipedia.summary(search_term, sentences=3)
     except Exception as e:
@@ -77,13 +85,15 @@ def wit(recognition):
         tts(response)
     elif "weather:current" in result:
         additional = ""
-        response = weather(additional)
+        call = "http://api.weatherapi.com/v1/current.json?key="
+        response = weather(call,additional)
         text = "Aktuálně je " + response
         print(text)
         tts(text)
     elif "weather:tomorrow" in result:
         additional = "&days=1"
-        response = weather(additional)
+        call = "http://api.weatherapi.com/v1/forecast.json?key="
+        response = weather(call,additional)
         text = "Zítra bude " + response
         print(text)
         tts(text)
