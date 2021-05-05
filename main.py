@@ -11,6 +11,7 @@ from datetime import datetime
 from datetime import timedelta
 import requests
 import wikipedia
+import random
 
 def tts(response):
     engine = pyttsx3.init()
@@ -59,6 +60,10 @@ def wiki(value):
         except Exception as e:
             return("")
     return("")
+
+def mood():
+    moods = ["Všechny nuly a jedničky sedí.", "Nemůže být líp.", "Dobře, doufám, že i tobě.", "Skvěle, díky za optání.", "Daří se mi dobře."]
+    return(random.choice(moods))
 
 def callback(recognizer, audio):
     try:
@@ -124,6 +129,10 @@ def commands(resp):
     elif "wikipedia:wikipedia" in result:
         value = data['entities']['wikipedia:wikipedia'][0]['value']
         response = wiki(value)
+        print(response)
+        tts(response)
+    elif "mood:mood" in result:
+        response = mood()
         print(response)
         tts(response)
 

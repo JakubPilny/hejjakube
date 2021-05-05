@@ -5,6 +5,7 @@ Záklaní (první) funkce:
 - přečtení datumu a času
 - předpověd počasí
 - přečtení prvních X vět z wikipedie
+- optání se na náladu
 
 Využítí služeb:
 - Google API - překlad zvuku na text
