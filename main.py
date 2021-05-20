@@ -120,10 +120,7 @@ def commands(resp):
         days = ('pondělí', 'úterý', 'středu', 'čtvrtek', 'pátek', 'sobotu', 'neděli')
         value = data['entities']['weather:forecast'][0]['value']
         dayofweek = (datetime.now() + timedelta(days.index(value))).weekday()
-        if (dayofweek == 0 or dayofweek == 1):
-            response = weather(8)
-        else:
-            response = weather(dayofweek)
+        response = weather(8) if dayofweek in [0, 1] else weather(dayofweek)
         print(response)
         tts(response)
     elif "wikipedia:wikipedia" in result:
