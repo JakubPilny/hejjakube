@@ -1,17 +1,11 @@
+import pyaudio, pyttsx3, json, requests, wikipedia, random, os
 from wit import Wit
-import pyaudio
-import pyttsx3
 import speech_recognition as sr
 from os import path
-import os
 from requests import get
-import json
 from playsound import playsound
 from datetime import datetime
 from datetime import timedelta
-import requests
-import wikipedia
-import random
 
 def tts(response):
     engine = pyttsx3.init()
@@ -91,31 +85,19 @@ def commands(resp):
     if "time:time" in result:
         now = datetime.now()
         response = "Teď je " + str(now.hour) + "hodin a " + str(now.minute) + "minut."
-        print(response)
-        tts(response)
     elif "date:date" in result:
         now = datetime.now()
         response = "Dnes je " + str(now.day) + "." + str(now.month) + "." + str(now.year)
-        print(response)
-        tts(response)
     elif "date:day" in result:
         now = datetime.now()
         days = ('pondělí', 'úterý', 'středa', 'čtvrtek', 'pátek', 'sobota', 'neděle')
         response = "Dnes je " + days[now.weekday()] + " " + str(now.day) + "." + str(now.month) + "." + str(now.year)
-        print(response)
-        tts(response)
     elif "weather:current" in result:
         response = weather(0)
-        print(response)
-        tts(response)
     elif "weather:today" in result:
         response = weather(1)
-        print(response)
-        tts(response)
     elif "weather:tomorrow" in result:
         response = weather(2)
-        print(response)
-        tts(response)
     elif "weather:forecast" in result:
         days = ('pondělí', 'úterý', 'středu', 'čtvrtek', 'pátek', 'sobotu', 'neděli')
         value = data['entities']['weather:forecast'][0]['value']
@@ -124,18 +106,13 @@ def commands(resp):
             response = weather(8)
         else:
             response = weather(dayofweek)
-        print(response)
-        tts(response)
     elif "wikipedia:wikipedia" in result:
         value = data['entities']['wikipedia:wikipedia'][0]['value']
         response = wiki(value)
-        print(response)
-        tts(response)
     elif "mood:mood" in result:
         response = mood()
-        print(response)
-        tts(response)
-
+    print(response)
+    tts(response)
 while True:
     os.system('cls')
     r = sr.Recognizer()
